@@ -246,7 +246,7 @@ int main()
     int wd;
     q = queue_create (128);
     fd=inotify_init();
-    wd = inotify_add_watch (fd, "/home/shane/pro/dropbox/file", IN_MODIFY);
+    wd = inotify_add_watch (fd, "file", IN_MODIFY);
     printf("add watch: %d\n", wd);
     process_inotify_events (q,fd);
     queue_destroy (q);
