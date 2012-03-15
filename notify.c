@@ -1,3 +1,5 @@
+// server side
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,10 +13,10 @@
 #include <sys/sysinfo.h>
 #include <sys/epoll.h>
 #include <signal.h>
-//#include <linux/inotify.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <sys/inotify.h>
+
 struct queue_struct
 {
   int capacity;
@@ -23,9 +25,24 @@ struct queue_struct
   int size;
   void **array;
 };
+
 struct queue_struct;
 typedef struct queue_struct *queue_t;
 void queue_make_empty (queue_t q);
+
+void handle_modify_file(char *filename)
+{
+    FILE *fp = fopen(filename, "r");
+    if (!fp) {
+        printf("Can't open: %s\n", filename);
+        return;
+    }
+
+    
+
+    fclose(fp);
+}
+
 int queue_empty (queue_t q)
 {
     return q->size == 0;
