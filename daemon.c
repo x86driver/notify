@@ -5,6 +5,9 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <pthread.h>
+#include <poll.h>
+
+#define max(x,y) ((x) > (y) ? (x) : (y))
 
 extern FILE *stderr;
 extern char **environ;
@@ -31,24 +34,38 @@ void show_fd(int fd)
 
 void *monitor_parent_stdout(void *data)
 {
+    int nfds = 0;
     fd_set rfds;
 
     FD_ZERO(&rfds);
     FD_SET(fdout[0], &rfds);
     FD_SET(fderr[0], &rfds);
 
-    while (1) {
-        if (select(fderr[0]+1, &rfds, NULL, NULL, NULL) <= 0)
-            continue;
+    nfds = max(fdout[0], fderr[0]);
 
-        if (FD_ISSET(fdout[0], &rfds)) {
-            show_fd(fdout[0]);
+    struct pollfd pollFd[2];
+    pollFd[0].fd = fdout[0];
+    pollFd[0].events = POLLIN;
+    pollFd[1].fd = fderr[0];
+    pollFd[1].events = POLLIN;
+
+    while (1) {
+        poll(&pollFd[0], 2, 0);
+        if (pollFd[0].revents & POLLIN)
+            show_fd(pollFd[0].fd);
+        if (pollFd[1].revents & POLLIN)
+            show_fd(pollFd[1].fd);
+//        if (select(nfds+1, &rfds, NULL, NULL, NULL) <= 0)
+//            continue;
+
+//        if (FD_ISSET(fdout[0], &rfds)) {
+//            show_fd(fdout[0]);
 //            printf("from out\n");
-        }
-        if (FD_ISSET(fderr[0], &rfds)) {
-            show_fd(fderr[0]);
+//        }
+//        if (FD_ISSET(fderr[0], &rfds)) {
+//            show_fd(fderr[0]);
 //            printf("from err\n");
-        }
+//        }
     }
 }
 
@@ -108,6 +125,7 @@ void child()
         } else {
 //            write(2, "fuck\n", 5);
             fprintf(stderr, "command [%s] not found\n", buf);
+//            printf("fprintf: %d\n", ret);
 //            printf("command [%s] not found\n", buf);
         }
     }
